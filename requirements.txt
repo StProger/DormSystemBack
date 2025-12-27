@@ -1,0 +1,10 @@
+fastapi
+pydantic_settings
+asyncpg
+sqlalchemy
+alembic
+passlib
+uvicorn
+pydantic[email]
+bcrypt==4.0.1
+minio

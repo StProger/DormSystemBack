@@ -1,0 +1,39 @@
+# Single node single drive Minio
+# https://min.io/docs/minio/container/operations/install-deploy-manage/deploy-minio-single-node-single-drive.html
+#  http://127.0.0.1:39001
+services:
+  minio:
+    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    restart: always
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./data:/data
+    # env_file: "../.env"
+#    environment:
+#      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+#      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address :9001
+    healthcheck:
+      test: mc ready local
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+#  minio_createbuckets:
+#    image: minio/mc:RELEASE.2024-05-24T09-08-49Z
+#    depends_on:
+#      - minio
+#    entrypoint: >
+#      /bin/sh -c "
+#      sleep 10;
+#      /usr/bin/mc config host add minio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+#      /usr/bin/mc mb --ignore-existing minio/rawfiles;
+#      /usr/bin/mc policy set public minio/rawfiles;
+#      /usr/bin/mc mb --ignore-existing minio/textfiles;
+#      /usr/bin/mc policy set public minio/textfiles;
+#      /usr/bin/mc mb --ignore-existing minio/textfiles-no-pii;
+#      /usr/bin/mc policy set public minio/textfiles-no-pii;
+#      exit 0;
+#      "
