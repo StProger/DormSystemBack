@@ -10,10 +10,6 @@ services:
       - 9001:9001
     volumes:
       - ./data:/data
-    # env_file: "../.env"
-#    environment:
-#      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-#      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address :9001
     healthcheck:
       test: mc ready local
@@ -21,19 +17,10 @@ services:
       timeout: 5s
       retries: 5
 
-#  minio_createbuckets:
-#    image: minio/mc:RELEASE.2024-05-24T09-08-49Z
-#    depends_on:
-#      - minio
-#    entrypoint: >
-#      /bin/sh -c "
-#      sleep 10;
-#      /usr/bin/mc config host add minio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
-#      /usr/bin/mc mb --ignore-existing minio/rawfiles;
-#      /usr/bin/mc policy set public minio/rawfiles;
-#      /usr/bin/mc mb --ignore-existing minio/textfiles;
-#      /usr/bin/mc policy set public minio/textfiles;
-#      /usr/bin/mc mb --ignore-existing minio/textfiles-no-pii;
-#      /usr/bin/mc policy set public minio/textfiles-no-pii;
-#      exit 0;
-#      "
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "dorm_system"

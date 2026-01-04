@@ -8,3 +8,5 @@ uvicorn
 pydantic[email]
 bcrypt==4.0.1
 minio
+python-multipart
+pyJWT

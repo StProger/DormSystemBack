@@ -4,3 +4,6 @@ from .file_storage import FileStorage
 from .announcement import Announcement
 from .ticket import Ticket
 from .ticket_attachment import TicketAttachment
+from .room import Room
+from .room_resident import RoomResident
+from .room_assessment import RoomAssessment
