@@ -3,13 +3,13 @@
 #  http://127.0.0.1:39001
 services:
   minio:
-    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    image: minio/minio:latest
     restart: always
     ports:
-      - 9000:9000
-      - 9001:9001
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - ./data:/data
+      - ./minio_data:/data
     command: server /data --console-address :9001
     healthcheck:
       test: mc ready local
@@ -18,9 +18,11 @@ services:
       retries: 5
 
   postgres:
-    image: postgres:latest
+    image: postgres:alpine
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/pgsql/data
     environment:
       POSTGRES_PASSWORD: "1234"
       POSTGRES_DB: "dorm_system"
