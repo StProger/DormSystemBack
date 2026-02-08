@@ -7,6 +7,8 @@ from .api.routes import announcements as announcements_router
 from .api.routes import tickets as tickets_router
 from .api.routes import room_assessments as room_assessments_router
 from .api.routes import guest_passes as guest_router
+from .api.routes import admin_dorm
+from .api.routes import admin_import
 
 settings = get_settings()
 app = FastAPI(title=settings.APP_NAME)
@@ -25,6 +27,8 @@ app.include_router(announcements_router.router, prefix="/api")
 app.include_router(tickets_router.router, prefix="/api")
 app.include_router(room_assessments_router.router, prefix="/api")
 app.include_router(guest_router.router, prefix="/api")
+app.include_router(admin_dorm.router, prefix="/api")
+app.include_router(admin_import.router, prefix="/api")
 
 @app.get("/api/health")
 def health():
