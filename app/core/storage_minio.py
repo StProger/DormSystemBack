@@ -6,6 +6,7 @@ import os
 from minio import Minio
 from fastapi import UploadFile
 from .config import get_settings
+from minio.error import S3Error
 
 settings = get_settings()
 
@@ -17,8 +18,13 @@ _minio = Minio(
 )
 
 def ensure_bucket():
-    if not _minio.bucket_exists(settings.S3_BUCKET):
-        _minio.make_bucket(settings.S3_BUCKET)
+    try:
+        if not _minio.bucket_exists(settings.S3_BUCKET):
+            _minio.make_bucket(settings.S3_BUCKET)
+    except S3Error as e:
+        # если бакет успели создать параллельно — игнорируем
+        if e.code not in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists"):
+            raise
 
 def make_key(prefix: str, filename: str) -> str:
     ext = ""
