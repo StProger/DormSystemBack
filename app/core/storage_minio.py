@@ -34,7 +34,7 @@ def make_key(prefix: str, filename: str) -> str:
             ext = ""
     return f"{prefix}/{uuid4()}" + (f".{ext}" if ext else "")
 
-async def upload_file(prefix: str, file: UploadFile) -> tuple[str, int, str | None]:
+def upload_file(prefix: str, file: UploadFile) -> tuple[str, int, str | None]:
     """
     Стриминг в MinIO без чтения в память.
     Возвращает (object_key, size_bytes, etag).
