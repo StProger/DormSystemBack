@@ -10,6 +10,7 @@ from .api.routes import guest_passes as guest_router
 from .api.routes import admin_dorm
 from .api.routes import admin_import
 from app.api.routes import notifications, admin_notifications, receipt_requests
+from app.api.routes import reports
 
 settings = get_settings()
 app = FastAPI(title=settings.APP_NAME)
@@ -33,6 +34,7 @@ app.include_router(admin_import.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(admin_notifications.router, prefix="/api")
 app.include_router(receipt_requests.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
 
 @app.get("/api/health")
 def health():
