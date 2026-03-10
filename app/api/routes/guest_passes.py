@@ -10,6 +10,7 @@ from ...core.database import get_db
 from ...api.deps import get_current_user
 from ...models.user import User
 from ...models.guest_pass import GuestPass, GuestPassStatus
+from ...core.audit import audit_log
 from ...schemas.guest_pass import (
     GuestPassCreate, GuestPassOut, GuestPassAdminOut, GuestPassAdminUpdate
 )
@@ -47,6 +48,7 @@ async def create_guest_pass(
     db.add(gp)
     await db.commit()
     await db.refresh(gp)
+    audit_log("guest_pass_created", entity_type="guest_pass", entity_id=str(gp.id))
     return GuestPassOut(
         id=str(gp.id),
         guest_full_name=gp.guest_full_name,
@@ -166,11 +168,13 @@ async def admin_update_guest_pass(
             # если есть planned_to — используем, иначе сутки от planned_from
             base = g.planned_to or (g.planned_from + timedelta(days=1))
             g.code_expires_at = base
+        audit_log("guest_pass_approved", entity_type="guest_pass", entity_id=str(g.id))
     elif payload.action == "reject":
         g.status = GuestPassStatus.rejected
         g.approved_by = current.id
         g.code = None
         g.code_expires_at = None
+        audit_log("guest_pass_rejected", entity_type="guest_pass", entity_id=str(g.id))
 
     await db.commit()
     await db.refresh(g)
@@ -223,6 +227,7 @@ async def guard_check_in(
     g.status = GuestPassStatus.checked_in
     g.checked_in_at = now
     await db.commit()
+    audit_log("guest_check_in", entity_type="guest_pass", entity_id=str(g.id))
     return {"status": "ok", "id": str(g.id)}
 
 @router.post("/check-out")
@@ -242,4 +247,5 @@ async def guard_check_out(
     g.status = GuestPassStatus.checked_out
     g.checked_out_at = now
     await db.commit()
+    audit_log("guest_check_out", entity_type="guest_pass", entity_id=str(g.id))
     return {"status": "ok", "id": str(g.id)}

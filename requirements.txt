@@ -11,3 +11,5 @@ minio
 python-multipart
 pyJWT
 openpyxl
+python-json-logger
+python-logstash-async

@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     S3_BUCKET: str = "dorm-files"
     S3_SECURE: bool = False                 # True если https
 
+    # ELK / Logstash
+    LOGSTASH_HOST: str = "localhost"
+    LOGSTASH_PORT: int = 5044
+    LOGSTASH_ENABLED: bool = True
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

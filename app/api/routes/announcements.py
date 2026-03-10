@@ -8,6 +8,7 @@ from app.core.storage_minio import upload_file, presign_get
 from app.models.user import User
 from app.models.file_storage import FileStorage, StorageBackend
 from app.models.announcement import Announcement
+from app.core.audit import audit_log
 from app.schemas.announcement import AnnouncementCreate, AnnouncementOut
 
 router = APIRouter(prefix="/announcements", tags=["announcements"])
@@ -54,6 +55,7 @@ async def create_announcement(
         if f:
             image_url = presign_get(f.object_key)
 
+    audit_log("announcement_created", entity_type="announcement", entity_id=str(ann.id))
     return AnnouncementOut(
         id=str(ann.id),
         title=ann.title,

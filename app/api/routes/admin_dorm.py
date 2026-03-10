@@ -13,6 +13,7 @@ from ..deps import get_current_user
 from ...models.user import User, UserRole
 from ...models.room import Room
 from ...models.room_resident import RoomResident
+from ...core.audit import audit_log
 from ...schemas.admin_rooms import (
     RoomCreate, RoomAdminOut, StudentAdminOut,
     AssignRequest, ReleaseRequest
@@ -80,6 +81,7 @@ async def create_room(
     await db.commit()
     await db.refresh(room)
 
+    audit_log("room_created", entity_type="room", entity_id=str(room.id), detail={"number": room.number})
     return RoomAdminOut(id=str(room.id), number=room.number, capacity=room.capacity, occupancy=0)
 
 @router.delete("/rooms/{room_id}", status_code=204)
@@ -104,6 +106,7 @@ async def delete_room(
 
     await db.delete(r)
     await db.commit()
+    audit_log("room_deleted", entity_type="room", entity_id=room_id, detail={"number": r.number})
     return None
 
 # -------- Users search --------
@@ -226,6 +229,7 @@ async def create_student(
     await db.commit()
     await db.refresh(u)
 
+    audit_log("student_created", entity_type="user", entity_id=str(u.id), detail={"email": email})
     return StudentAdminOut(
         id=str(u.id),
         full_name=u.full_name,
@@ -271,6 +275,7 @@ async def assign_student_to_room(
     rr = RoomResident(user_id=payload.user_id, room_id=room.id, is_active=True)
     db.add(rr)
     await db.commit()
+    audit_log("student_assigned_to_room", entity_type="room_resident", detail={"user_id": str(payload.user_id), "room_id": str(room.id)})
 
     return {"status": "ok"}
 
@@ -295,4 +300,5 @@ async def release_student(
     rr.is_active = False
     rr.released_at = now
     await db.commit()
+    audit_log("student_released_from_room", entity_type="room_resident", detail={"user_id": str(payload.user_id)})
     return {"status": "ok"}

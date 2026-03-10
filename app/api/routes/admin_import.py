@@ -11,6 +11,7 @@ from ..deps import get_current_user
 from ...models.user import User, UserRole  # <-- ВАЖНО: импортируем UserRole
 from ...models.room import Room
 from ...core.excel import read_sheet_rows_xlsx, ExcelError
+from ...core.audit import audit_log
 from ...schemas.import_result import ImportResult, ImportRowError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -93,6 +94,7 @@ async def import_rooms_xlsx(
                 skipped += 1
 
     await db.commit()
+    audit_log("rooms_imported", entity_type="room", detail={"inserted": inserted, "updated": updated, "skipped": skipped})
     return ImportResult(total_rows=len(rows), inserted=inserted, updated=updated, skipped=skipped, errors=errors)
 
 
@@ -190,4 +192,5 @@ async def import_students_xlsx(
                 skipped += 1
 
     await db.commit()
+    audit_log("students_imported", entity_type="user", detail={"inserted": inserted, "updated": updated, "skipped": skipped})
     return ImportResult(total_rows=len(rows), inserted=inserted, updated=updated, skipped=skipped, errors=errors)

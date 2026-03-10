@@ -10,6 +10,7 @@ from ...services.notifications_service import (
     get_user_notifications_list, get_user_notification_detail, mark_read, unread_count
 )
 from ...core.storage_minio import presign_get
+from ...core.audit import audit_log
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -80,4 +81,5 @@ async def mark_my_notification_read(
     nid = uuid.UUID(notification_id)
     await mark_read(db, current.id, nid)
     await db.commit()
+    audit_log("notification_read", entity_type="notification", entity_id=notification_id)
     return {"status": "ok"}

@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.ticket import Ticket, TicketType, TicketStatus
 from app.models.ticket_attachment import TicketAttachment
 from app.models.file_storage import FileStorage, StorageBackend
+from app.core.audit import audit_log
 from app.schemas.ticket import (
     TicketCreate, TicketOut, TicketAttachmentOut,
     TicketAdminOut, TicketAdminUpdate
@@ -66,6 +67,7 @@ async def create_ticket(
             attachments.append(TicketAttachmentOut(file_name=fs.file_name, url=presign_get(fs.object_key)))
 
     await db.commit()
+    audit_log("ticket_created", entity_type="ticket", entity_id=str(t.id), detail={"type": type})
     return TicketOut(
         id=str(t.id),
         title=t.title,
@@ -224,6 +226,7 @@ async def admin_update_ticket(
 
     await db.commit()
     await db.refresh(t)
+    audit_log("ticket_updated", entity_type="ticket", entity_id=str(t.id), detail={"status": t.status.value})
 
     # ответ аналогичен admin_list_tickets на один объект
     from ...models.user import User as AppUser

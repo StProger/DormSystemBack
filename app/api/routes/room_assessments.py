@@ -10,6 +10,7 @@ from ...schemas.room_assessment import RoomAssessmentCreate, RoomAssessmentOut, 
 # ЗАГЛУШКИ-импорты моделей комнаты/проживания – замени на свои, если имена другие:
 from ...models.room import Room
 from ...models.room_resident import RoomResident  # должен хранить user_id, room_id и is_active (или end_date is null)
+from ...core.audit import audit_log
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -89,6 +90,7 @@ async def assess_room(
     await db.refresh(ra)
 
     assessed_by_name = getattr(current, "full_name", None) or getattr(current, "email", None)
+    audit_log("room_assessed", entity_type="room", entity_id=room_id, detail={"score": payload.score})
     return RoomAssessmentOut(score=ra.score, comment=ra.comment, assessed_at=ra.assessed_at, assessed_by_name=assessed_by_name)
 
 
@@ -107,6 +109,7 @@ async def create_room(
     r = Room(number=number, capacity=capacity)
     db.add(r)
     await db.commit()
+    audit_log("room_created", entity_type="room", entity_id=str(r.id), detail={"number": r.number})
     return {"id": str(r.id), "number": r.number}
 
 @router.post("/{room_id}/assign", status_code=200)
@@ -132,6 +135,7 @@ async def assign_user_to_room(
     rr = RoomResident(room_id=room.id, user_id=user_id, is_active=True)
     db.add(rr)
     await db.commit()
+    audit_log("user_assigned_to_room", entity_type="room_resident", detail={"user_id": user_id, "room_id": room_id})
     return {"status": "ok"}
 
 @router.post("/{room_id}/release", status_code=200)
@@ -157,4 +161,5 @@ async def release_user_from_room(
     rr.is_active = False
     rr.released_at = func.now()
     await db.commit()
+    audit_log("user_released_from_room", entity_type="room_resident", detail={"user_id": user_id, "room_id": room_id})
     return {"status": "ok"}

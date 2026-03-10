@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +6,7 @@ from sqlalchemy import select
 from ..deps import get_current_user
 from ...core.database import get_db
 from ...core.security import verify_password, create_access_token, hash_password
+from ...core.audit import audit_log
 from ...models.user import User, UserRole
 from ...schemas.auth import LoginIn, TokenOut
 from ...schemas.user import UserOut
@@ -15,22 +14,20 @@ from ...schemas.user import UserOut
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-log = logging.getLogger(__name__)
-
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(_: User = Depends(get_current_user)):
-    # Просто логируем (уйдет в ELK)
-    log.info("user_logout")
+async def logout(current: User = Depends(get_current_user)):
+    audit_log("user_logout", entity_type="user", entity_id=str(current.id))
     return Response(status_code=204)
 
 @router.post("/login", response_model=TokenOut)
 async def login(data: LoginIn, db: AsyncSession = Depends(get_db)):
     q = await db.execute(select(User).where(User.email == data.email))
     user = q.scalar_one_or_none()
-    print(user)
     if not user or not verify_password(data.password, user.password_hash):
+        audit_log("user_login_failed", detail={"email": data.email})
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     token = create_access_token(sub=str(user.id), role=user.role.value)
+    audit_log("user_login_success", entity_type="user", entity_id=str(user.id))
     return TokenOut(access_token=token)
 
 # Удобный эндпоинт для первичного заведения админа (после — закомментируй/удали)

@@ -9,6 +9,7 @@ from ..deps import get_current_user
 from ...models.user import User, UserRole
 from ...models.room_resident import RoomResident
 from ...schemas.notifications import NotificationDetailOut
+from ...core.audit import audit_log
 from ...services.notifications_service import create_notification
 
 router = APIRouter(prefix="/admin/notifications", tags=["admin-notifications"])
@@ -43,4 +44,5 @@ async def admin_send_notification(
         files=files or None,
     )
     await db.commit()
+    audit_log("notification_sent", entity_type="notification", entity_id=str(nid), detail={"recipients": len(recipient_ids)})
     return {"status": "ok", "notification_id": str(nid)}

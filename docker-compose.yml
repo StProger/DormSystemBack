@@ -20,9 +20,9 @@ services:
   postgres:
     image: postgres:alpine
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - ./postgres_data:/var/lib/pgsql/data
+      - ./postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_PASSWORD: "1234"
       POSTGRES_DB: "dorm_system"

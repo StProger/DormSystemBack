@@ -14,6 +14,7 @@ from ...models.user import User
 from ...models.notification import NotificationAttachment
 from ...core.storage_minio import presign_get
 from ...core.email_smtp import send_email_html
+from ...core.audit import audit_log
 import logging
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ async def create_receipt_request(
     await db.commit()
     await db.refresh(req)
 
+    audit_log("receipt_request_created", entity_type="receipt_request", entity_id=str(req.id))
     return ReceiptRequestOut(
         id=str(req.id),
         period=req.period,
@@ -143,6 +145,7 @@ async def admin_respond_receipt_request(
     req.response_notification_id = nid
 
     await db.commit()
+    audit_log("receipt_request_responded", entity_type="receipt_request", entity_id=request_id)
     # Дублирование на email (если запрошено)
     if req.send_to_email:
         try:

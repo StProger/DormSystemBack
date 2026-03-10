@@ -1,3 +1,7 @@
+from app.core.logging_config import setup_logging
+
+setup_logging()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import get_settings
@@ -11,10 +15,12 @@ from .api.routes import admin_dorm
 from .api.routes import admin_import
 from app.api.routes import notifications, admin_notifications, receipt_requests
 from app.api.routes import reports
+from app.middleware.request_logging import RequestLoggingMiddleware
 
 settings = get_settings()
 app = FastAPI(title=settings.APP_NAME)
 
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,

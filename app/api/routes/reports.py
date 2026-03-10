@@ -17,6 +17,7 @@ from app.schemas.reports import (
 )
 from app.services.reports_service import occupancy_report, tickets_report, guest_pass_report
 from app.core.excel_reports import wb_to_bytes, occupancy_to_wb, tickets_to_wb, guest_pass_to_wb
+from app.core.audit import audit_log
 
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -47,6 +48,7 @@ async def get_occupancy(
 ):
     _ensure_admin(current)
     summary, rooms = await occupancy_report(db)
+    audit_log("report_generated", entity_type="report", detail={"report_id": "occupancy"})
     return OccupancyReportOut(
         summary=OccupancySummary(**summary),
         rooms=[OccupancyRoomRow(**r) for r in rooms],
@@ -62,6 +64,7 @@ async def get_tickets(
 ):
     _ensure_admin(current)
     by_status, by_type, by_day = await tickets_report(db, from_date, to_date)
+    audit_log("report_generated", entity_type="report", detail={"report_id": "tickets"})
     return TicketsReportOut(
         from_date=from_date.isoformat() if from_date else None,
         to_date=to_date.isoformat() if to_date else None,
@@ -83,6 +86,7 @@ async def get_guest_passes(
         raise HTTPException(403)
 
     by_status, by_day = await guest_pass_report(db, from_date, to_date)
+    audit_log("report_generated", entity_type="report", detail={"report_id": "guest_passes"})
     return GuestPassReportOut(
         from_date=from_date.isoformat() if from_date else None,
         to_date=to_date.isoformat() if to_date else None,
@@ -126,6 +130,7 @@ async def export_report_xlsx(
     else:
         raise HTTPException(404, "Неизвестный отчёт")
 
+    audit_log("report_exported", entity_type="report", detail={"report_id": report_id, "format": "xlsx"})
     data = wb_to_bytes(wb)
     return StreamingResponse(
         io.BytesIO(data),
