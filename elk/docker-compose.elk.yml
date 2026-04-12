@@ -51,6 +51,7 @@ services:
 
 volumes:
   es_data:
+    name: dorm_es_data
 
 networks:
   elk:

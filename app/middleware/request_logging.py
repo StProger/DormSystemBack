@@ -48,6 +48,33 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start = time.perf_counter()
         try:
             response = await call_next(request)
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            if response.status_code == 200:
+                logger.info(
+                    "request_completed",
+                    extra={
+                        "event": "request_completed",
+                        "method": request.method,
+                        "path": request.url.path,
+                        "status_code": response.status_code,
+                        "duration_ms": duration_ms,
+                        "client_ip": client_ip,
+                    },
+                )
+            else:
+                logger.error(
+                    "request_completed",
+                    extra={
+                        "event": "request_completed",
+                        "method": request.method,
+                        "path": request.url.path,
+                        "status_code": response.status_code,
+                        "duration_ms": duration_ms,
+                        "client_ip": client_ip,
+                    },
+                )
+            response.headers["X-Trace-Id"] = trace_id
+            return response
         except Exception as exc:
             duration_ms = round((time.perf_counter() - start) * 1000, 2)
             logger.error(
@@ -65,19 +92,3 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         finally:
             trace_id_ctx.reset(trace_id_token)
             user_id_ctx.reset(user_id_token)
-
-        duration_ms = round((time.perf_counter() - start) * 1000, 2)
-        logger.info(
-            "request_completed",
-            extra={
-                "event": "request_completed",
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": response.status_code,
-                "duration_ms": duration_ms,
-                "client_ip": client_ip,
-            },
-        )
-
-        response.headers["X-Trace-Id"] = trace_id
-        return response
